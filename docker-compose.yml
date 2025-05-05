@@ -1,0 +1,63 @@
+services:
+  postgres:
+    image: postgres:15
+    restart: always
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB:   ${POSTGRES_DB}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - 5432:5432
+
+  minio:
+    image: minio/minio:latest
+    command: server /data
+    restart: always
+    environment:
+      MINIO_ROOT_USER:     ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+    volumes:
+      - miniodata:/data
+    ports:
+      - 9000:9000
+
+  airflow:
+    image: apache/airflow:2.7.1
+    restart: always
+    depends_on:
+      - postgres
+    environment:
+      # Use Postgres as Airflow’s metadata database
+      AIRFLOW__CORE__EXECUTOR: LocalExecutor
+      AIRFLOW__CORE__SQL_ALCHEMY_CONN: postgresql+psycopg2://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      AIRFLOW__CORE__LOAD_EXAMPLES: 'False'
+      AIRFLOW__API__AUTH_BACKENDS: 'airflow.api.auth.backend.basic_auth'
+      AIRFLOW__WEBSERVER__RBAC: 'True'
+      # Install Postgres & S3 providers
+      _PIP_ADDITIONAL_REQUIREMENTS: apache-airflow-providers-postgres,apache-airflow-providers-amazon
+    volumes:
+      # Your DAGs go here
+      - ./packages/infra/dags:/opt/airflow/dags
+      # Persist logs & any custom plugins
+      - airflow_logs:/opt/airflow/logs
+      - airflow_plugins:/opt/airflow/plugins
+    ports:
+      - 8080:8080
+    command: >
+      bash -c "
+        airflow db init &&
+        airflow users create \
+          --username admin --password admin \
+          --firstname Admin --lastname User \
+          --role Admin --email admin@example.com \
+        && airflow webserver &
+        airflow scheduler
+      "
+
+volumes:
+  pgdata:
+  miniodata:
+  airflow_logs:
+  airflow_plugins:
