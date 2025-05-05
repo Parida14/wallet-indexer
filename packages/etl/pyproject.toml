@@ -1,0 +1,10 @@
+[tool.poetry]
+name = "etl"
+version = "0.1.0"
+description = "Wallet ETL scripts"
+authors = ["you <you@example.com>"]
+packages = [{ include = "etl" }]
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
