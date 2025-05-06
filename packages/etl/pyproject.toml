@@ -2,7 +2,7 @@
 name = "etl"
 version = "0.1.0"
 description = "Wallet ETL scripts"
-authors = ["you <you@example.com>"]
+authors = ["Lagnajit Parida <lagnajit.parida1@gmail.com>"]
 packages = [{ include = "etl" }]
 
 [build-system]

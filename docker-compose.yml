@@ -10,7 +10,18 @@ services:
       - pgdata:/var/lib/postgresql/data
     ports:
       - 5432:5432
-
+  etl:
+    build:
+      context: ./packages/etl
+    env_file: .env
+    volumes:
+      - ./packages/etl/src:/app/src
+      - ./packages/etl/src/schema.sql:/app/schema.sql
+    depends_on:
+      - postgres
+    command: >
+      bash -c "psql $DATABASE_URL -f schema.sql
+               && python -m src.main --wallet 0xYourTestWallet"
   minio:
     image: minio/minio:latest
     command: server /data
